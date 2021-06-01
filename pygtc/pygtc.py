@@ -257,7 +257,12 @@ def plotGTC(chains, **kwargs):
     defaultColorsOrder = ['blues', 'oranges', 'greens', 'reds', 'purples',
                           'browns', 'pinks', 'grays', 'yellows', 'cyans']
 
+    # User-defined color ordering
+    colorsOrder = kwargs.pop('colorsOrder', defaultColorsOrder)
     priorColor = '#333333'
+
+    priorLineStyle = kwargs.pop('priorLineStyle', '--')
+    vline = kwargs.pop('vline', None)
 
     # Angle of tick labels
     tickAngle = 45
@@ -298,8 +303,8 @@ def plotGTC(chains, **kwargs):
 
     # Get number of chains
     nChains = len(chains)
-    assert nChains <= len(defaultColorsOrder), \
-        "currently only supports up to "+str(len(defaultColorsOrder))+" chains"
+    assert nChains <= len(colorsOrder), \
+        "currently only supports up to "+str(len(colorsOrder))+" chains"
 
     # Check that each chain looks reasonable (2d shape)
     for i in range(nChains):
@@ -359,8 +364,7 @@ def plotGTC(chains, **kwargs):
     if not labelRotation[1]:
         shiftY = 0
 
-    # User-defined color ordering
-    colorsOrder = kwargs.pop('colorsOrder', defaultColorsOrder)
+
 
     # Convert to list if only one entry
     if __isstr(colorsOrder):
@@ -407,9 +411,11 @@ def plotGTC(chains, **kwargs):
         if haveScipy:
             assert len(priors) == nDim, \
                 "List of priors must match number of parameters"
-            for i in range(nDim):
+            for i in range(len(priors)):
                 if priors[i]:
-                    assert priors[i][1] > 0, "Prior width must be positive"
+                    for prior in priors[i]:
+                        if prior:
+                            assert prior[1] > 0, "Prior width must be positive"
         else:
             warnings.warn("Gaussian priors requires scipy, ignoring priors.",
                           UserWarning)
@@ -798,13 +804,17 @@ def plotGTC(chains, **kwargs):
             # Extract 1d prior
             prior1d = None
             if priors is not None:
-                if priors[i] and priors[i][1] > 0:
-                    prior1d = priors[i]
+                #if priors[i] and priors[i][1] > 0:
+                    #prior1d = priors[i]
+                prior1d = priors[i]
+            vline1d = None
+            if vline is not None:
+                vline1d = vline[i]
             # Plot!
             ax = __plot1d(ax, nChains, chainsForPlot1D, weights, nBins,
                           smoothingKernel, filledPlots, colors,
                           truthsForPlot1D, truthColors, truthLineStyles,
-                          prior1d, priorColor)
+                          prior1d, priorColor, priorLineStyle, vline1d)
 
             # Panel layout
             ax.grid(False)
@@ -1020,7 +1030,7 @@ def plotGTC(chains, **kwargs):
 
 def __plot1d(ax, nChains, chains1d, weights, nBins, smoothingKernel,
              filledPlots, colors, truths1d, truthColors, truthLineStyles,
-             prior1d, priorColor):
+             prior1d, priorColor, priorLineStyle, vline):
     r"""Plot the 1d histogram and optional prior.
 
     Parameters
@@ -1124,10 +1134,18 @@ def __plot1d(ax, nChains, chains1d, weights, nBins, smoothingKernel,
 
     # Gaussian prior
     if prior1d is not None:
-        # Plot prior in -4 to +4 sigma range
-        arr = np.linspace(prior1d[0]-4*prior1d[1], prior1d[0]+4*prior1d[1], 40)
-        ax.plot(arr, norm.pdf(arr, prior1d[0], prior1d[1]),
-                lw=1, color=priorColor)
+        for k in range(len(prior1d)):
+            if prior1d[k] is not None:
+                # Plot prior in -4 to +4 sigma range
+                arr = np.linspace(prior1d[k][0]-4*prior1d[k][1],
+                                  prior1d[k][0]+4*prior1d[k][1], 40)
+                ax.plot(arr, norm.pdf(arr, prior1d[k][0], prior1d[k][1]),
+                        lw=1, ls=priorLineStyle, color=colors[k][1])
+
+    if vline is not None:
+        for k in range(len(vline)):
+            if vline[k] is not None:
+                ax.axvline(vline[k], lw=1, color='#333333', ls=':')
 
     return ax
 
