@@ -3,6 +3,7 @@
 
 # Python build
 *.pyc
+/build
 
 # Python packaging
 *.egg-info
