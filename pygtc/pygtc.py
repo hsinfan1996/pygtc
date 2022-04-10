@@ -261,9 +261,6 @@ def plotGTC(chains, **kwargs):
     colorsOrder = kwargs.pop('colorsOrder', defaultColorsOrder)
     priorColor = '#333333'
 
-    priorLineStyle = kwargs.pop('priorLineStyle', '--')
-    vline = kwargs.pop('vline', None)
-
     # Angle of tick labels
     tickAngle = 45
 
