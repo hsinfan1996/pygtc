@@ -261,9 +261,6 @@ def plotGTC(chains, **kwargs):
     colorsOrder = kwargs.pop('colorsOrder', defaultColorsOrder)
     priorColor = '#333333'
 
-    priorLineStyle = kwargs.pop('priorLineStyle', '--')
-    vline = kwargs.pop('vline', None)
-
     # Angle of tick labels
     tickAngle = 45
 
@@ -412,14 +409,21 @@ def plotGTC(chains, **kwargs):
             assert len(priors) == nDim, \
                 "List of priors must match number of parameters"
             for i in range(len(priors)):
-                if priors[i]:
+                if priors[i] is not None:
                     for prior in priors[i]:
-                        if prior:
+                        if prior is not None:
                             assert prior[1] > 0, "Prior width must be positive"
         else:
             warnings.warn("Gaussian priors requires scipy, ignoring priors.",
                           UserWarning)
             priors = None
+
+    vline = kwargs.pop('vline', None)
+    if vline is not None:
+        assert len(vline) == nDim, \
+            f'The argument should be a list containing {nDim} lists'
+
+    priorLineStyle = kwargs.pop('priorLineStyle', '--')
 
     # Manage the sample point weights
     weights = kwargs.pop('weights', None)
